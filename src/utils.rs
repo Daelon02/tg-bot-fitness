@@ -1,3 +1,4 @@
+use colored::*;
 use log::{Level, LevelFilter};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -22,7 +23,7 @@ pub fn make_keyboard(menu_buttons: Vec<String>) -> KeyboardMarkup {
 
 pub fn init_logging() -> crate::errors::Result<()> {
     // Logging lib errors and all app logs
-    let log_level = LevelFilter::Info;
+    let log_level = LevelFilter::Debug;
 
     // This is the main logging dispatch
     let mut main_logging_dispatch = fern::Dispatch::new().level(log_level);
@@ -52,8 +53,7 @@ pub fn init_logging() -> crate::errors::Result<()> {
     // LevelFilter::from_str()
     main_logging_dispatch = main_logging_dispatch.chain(stdout_dispatch);
 
-    let mut log_level_for = HashMap::new();
-    log_level_for.insert("teloxide".to_string(), "debug".to_string());
+    let log_level_for: HashMap<String, String> = HashMap::new();
 
     for (module, log_level) in log_level_for.into_iter() {
         let log_level = LevelFilter::from_str(&log_level)?;

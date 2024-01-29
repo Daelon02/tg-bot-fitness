@@ -14,6 +14,13 @@ pub enum MenuCommands {
 pub enum State {
     #[default]
     Start,
+    GetPhoneNumber,
+    GetEmail {
+        phone_number: String,
+    },
+    CheckMyGymTrainings,
+    CheckMyHomeTrainings,
+    CheckMyDiet,
 }
 
 impl Display for MenuCommands {
