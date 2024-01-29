@@ -1,0 +1,1 @@
+DROP TABLE diet_lists_for_user;
