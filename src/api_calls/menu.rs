@@ -46,6 +46,17 @@ pub async fn change_menu(
                     .await?;
                 dialogue.update(State::DietMenu).await?;
             }
+            MenuCommands::GoBack => {
+                let keyboard = make_keyboard(vec![
+                    MenuCommands::MyGymTrainings.to_string(),
+                    MenuCommands::MyHomeTrainings.to_string(),
+                    MenuCommands::MyDiet.to_string(),
+                ]);
+                bot.send_message(msg.chat.id, MenuCommands::GoBack.to_string())
+                    .reply_markup(keyboard.resize_keyboard(true))
+                    .await?;
+                dialogue.update(State::ChangeMenu).await?;
+            }
         }
     }
     Ok(())

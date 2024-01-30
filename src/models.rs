@@ -24,6 +24,7 @@ pub enum MenuCommands {
     MyHomeTrainings,
     MyGymTrainings,
     MyDiet,
+    GoBack,
 }
 
 #[derive(Clone, Default)]
@@ -46,6 +47,7 @@ impl Display for MenuCommands {
             MenuCommands::MyHomeTrainings => write!(f, "Мої домашні тренування"),
             MenuCommands::MyGymTrainings => write!(f, "Мої тренування"),
             MenuCommands::MyDiet => write!(f, "Моє харчування"),
+            MenuCommands::GoBack => write!(f, "На головну"),
         }
     }
 }
@@ -56,6 +58,7 @@ impl From<String> for MenuCommands {
             "Мої домашні тренування" => MenuCommands::MyHomeTrainings,
             "Мої тренування" => MenuCommands::MyGymTrainings,
             "Моє харчування" => MenuCommands::MyDiet,
+            "На головну" => MenuCommands::GoBack,
             _ => panic!("Unknown command"),
         }
     }
