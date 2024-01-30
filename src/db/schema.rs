@@ -1,10 +1,13 @@
 diesel::table! {
     users (id) {
     id -> Uuid,
-    telegram_id -> BigInt,
-    name -> VarChar,
-    email -> Nullable<VarChar>,
-    phone_number -> VarChar
+    telegram_id -> Integer,
+    name -> Text,
+    email -> Nullable<Text>,
+    phone_number -> Text,
+    height -> Nullable<Integer>,
+    weight -> Nullable<Integer>,
+    age -> Nullable<Integer>
     }
 }
 
@@ -19,20 +22,11 @@ diesel::table! {
 }
 
 diesel::table! {
-    home_training_for_user (id) {
+    trainings_for_user (id) {
     id -> Uuid,
     user_id -> Uuid,
-    home_training -> Jsonb,
-    created_at -> Timestamptz,
-    updated_at -> Nullable<Timestamptz>
-    }
-}
-
-diesel::table! {
-    gym_trainings_for_user (id) {
-    id -> Uuid,
-    user_id -> Uuid,
-    gym_training -> Jsonb,
+    trainings -> Jsonb,
+    status -> Text,
     created_at -> Timestamptz,
     updated_at -> Nullable<Timestamptz>
     }

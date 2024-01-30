@@ -27,6 +27,9 @@ pub enum Errors {
 
     #[error(transparent)]
     RegexError(#[from] regex::Error),
+
+    #[error(transparent)]
+    OpenAIError(#[from] async_openai::error::OpenAIError),
 }
 
 pub type Result<T> = std::result::Result<T, Errors>;

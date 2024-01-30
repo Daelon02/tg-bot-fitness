@@ -35,10 +35,36 @@ pub enum State {
     GetEmail {
         phone_number: String,
     },
-    ChangeMenu,
-    HomeTrainingMenu,
-    GymTrainingMenu,
-    DietMenu,
+    GetAge {
+        phone_number: String,
+    },
+    GetWeightAndHeight {
+        phone_number: String,
+    },
+    ChangeMenu {
+        phone_number: String,
+    },
+    HomeTrainingMenu {
+        phone_number: String,
+    },
+    AddTraining {
+        phone_number: String,
+        training_state: String,
+    },
+    DeleteTraining {
+        phone_number: String,
+        training_state: String,
+    },
+    ShowTrainings {
+        phone_number: String,
+        training_state: String,
+    },
+    GymTrainingMenu {
+        phone_number: String,
+    },
+    DietMenu {
+        phone_number: String,
+    },
 }
 
 impl Display for MenuCommands {

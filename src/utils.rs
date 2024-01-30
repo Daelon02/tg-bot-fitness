@@ -1,6 +1,9 @@
 use crate::api_calls::basic_methods::{cancel, help, invalid_state, start};
-use crate::api_calls::menu::{change_menu, diet_menu, home_training_menu};
-use crate::api_calls::registration::{get_email, get_number};
+use crate::api_calls::menu::{change_menu, diet_menu, gym_training_menu, home_training_menu};
+use crate::api_calls::registration::{get_age, get_email, get_height_and_weight, get_number};
+use crate::api_calls::trainings::{add_training, delete_training, show_trainings};
+use crate::consts::{PROMPT_MSG_AGE, PROMPT_MSG_HEIGHT, PROMPT_MSG_WEIGHT};
+use crate::db::models::Users;
 use crate::models::Command;
 use crate::models::State;
 use colored::*;
@@ -27,15 +30,38 @@ pub fn schema() -> Handler<'static, DependencyMap, crate::errors::Result<()>, Dp
         .branch(case![Command::Cancel].endpoint(cancel));
 
     let callback_query_handler = Update::filter_message()
-        .branch(case![State::GetEmail { phone_number }].endpoint(get_email));
+        .branch(case![State::GetEmail { phone_number }].endpoint(get_email))
+        .branch(case![State::GetAge { phone_number }].endpoint(get_age))
+        .branch(case![State::GetWeightAndHeight { phone_number }].endpoint(get_height_and_weight));
 
     let message_handler = Update::filter_message()
         .branch(command_handler)
         .branch(case![State::GetPhoneNumber].endpoint(get_number))
-        .branch(case![State::ChangeMenu].endpoint(change_menu))
-        .branch(case![State::HomeTrainingMenu].endpoint(home_training_menu))
-        .branch(case![State::GymTrainingMenu].endpoint(home_training_menu))
-        .branch(case![State::DietMenu].endpoint(diet_menu))
+        .branch(case![State::HomeTrainingMenu { phone_number }].endpoint(home_training_menu))
+        .branch(case![State::GymTrainingMenu { phone_number }].endpoint(gym_training_menu))
+        .branch(case![State::DietMenu { phone_number }].endpoint(diet_menu))
+        .branch(case![State::ChangeMenu { phone_number }].endpoint(change_menu))
+        .branch(
+            case![State::AddTraining {
+                phone_number,
+                training_state
+            }]
+            .endpoint(add_training),
+        )
+        .branch(
+            case![State::DeleteTraining {
+                phone_number,
+                training_state
+            }]
+            .endpoint(delete_training),
+        )
+        .branch(
+            case![State::ShowTrainings {
+                phone_number,
+                training_state
+            }]
+            .endpoint(show_trainings),
+        )
         .branch(callback_query_handler)
         .branch(dptree::endpoint(invalid_state));
 
@@ -120,4 +146,44 @@ pub fn is_valid_email(email: &str) -> crate::errors::Result<bool> {
     // Use a regular expression to check if the email format is valid
     let re = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")?;
     Ok(re.is_match(email))
+}
+
+pub fn format_prompt(prompt: Option<&str>, const1: &str, const2: &str, user: Users) -> String {
+    if let Some(prompt) = prompt {
+        if prompt.contains(".") {
+            format!(
+                "{} {} {:?} {} {:?} {} {:?}",
+                const2,
+                PROMPT_MSG_AGE,
+                user.age,
+                PROMPT_MSG_HEIGHT,
+                user.height,
+                PROMPT_MSG_WEIGHT,
+                user.weight
+            )
+        } else {
+            format!(
+                "{}{} {} {:?} {} {:?} {} {:?}",
+                const1,
+                prompt,
+                PROMPT_MSG_AGE,
+                user.age,
+                PROMPT_MSG_HEIGHT,
+                user.height,
+                PROMPT_MSG_WEIGHT,
+                user.weight
+            )
+        }
+    } else {
+        format!(
+            "{} {} {:?} {} {:?} {} {:?}",
+            const2,
+            PROMPT_MSG_AGE,
+            user.age,
+            PROMPT_MSG_HEIGHT,
+            user.height,
+            PROMPT_MSG_WEIGHT,
+            user.weight
+        )
+    }
 }
