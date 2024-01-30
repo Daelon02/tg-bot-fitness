@@ -1,8 +1,24 @@
 use std::fmt::Display;
 use teloxide::dispatching::dialogue::InMemStorage;
 use teloxide::prelude::Dialogue;
+use teloxide::utils::command::BotCommands;
 
 pub type MyDialogue = Dialogue<State, InMemStorage<State>>;
+
+/// These commands are supported:
+#[derive(BotCommands, Clone)]
+#[command(
+    rename_rule = "lowercase",
+    description = "These commands are supported:"
+)]
+pub enum Command {
+    #[command(description = "display this text.")]
+    Help,
+    #[command(description = "start the purchase procedure.")]
+    Start,
+    #[command(description = "cancel the purchase procedure.")]
+    Cancel,
+}
 
 pub enum MenuCommands {
     MyHomeTrainings,
@@ -18,9 +34,7 @@ pub enum State {
     GetEmail {
         phone_number: String,
     },
-    CheckMyGymTrainings,
-    CheckMyHomeTrainings,
-    CheckMyDiet,
+    ChangeMenu,
 }
 
 impl Display for MenuCommands {

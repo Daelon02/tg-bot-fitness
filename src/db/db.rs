@@ -1,7 +1,6 @@
 use crate::db::models::{DietListForUser, GymTrainingsForUser, HomeTrainingsForUser, Users};
-use crate::errors::{Errors, Result};
+use crate::errors::Result;
 use diesel::prelude::*;
-use diesel::result::DatabaseErrorKind;
 use diesel::{Connection, PgConnection};
 use serde_json::Value;
 use teloxide::prelude::UserId;
@@ -54,7 +53,8 @@ impl Db {
     }
 
     pub async fn if_user_exists(&mut self, phone_number: &Option<UserId>) -> Result<bool> {
-        let user: Option<Users> = crate::db::schema::users::table
+        let user: Option<String> = crate::db::schema::users::table
+            .select(crate::db::schema::users::phone_number)
             .filter(
                 crate::db::schema::users::telegram_id
                     .eq(phone_number.unwrap_or(UserId(0)).0 as i64),

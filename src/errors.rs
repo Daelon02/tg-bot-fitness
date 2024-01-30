@@ -21,6 +21,12 @@ pub enum Errors {
 
     #[error(transparent)]
     InMemStorageError(#[from] teloxide::dispatching::dialogue::InMemStorageError),
+
+    #[error(transparent)]
+    SetLoggerError(#[from] log::SetLoggerError),
+
+    #[error(transparent)]
+    RegexError(#[from] regex::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Errors>;
