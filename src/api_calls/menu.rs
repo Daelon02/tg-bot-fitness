@@ -91,11 +91,15 @@ pub async fn home_training_menu(
             TrainingsCommands::AddTraining => {
                 log::info!("User wants to add training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Додати тренування").await?;
-                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку.").await?;
+                bot.send_message(
+                    msg.chat.id,
+                   "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку. \n\n\
+                 Також, потрібно буде трохи зачекати, генерую для тебе тренування)"
+                ).await?;
                 dialogue
                     .update(State::AddTraining {
                         phone_number,
-                        training_state: GYM_STATE.to_string(),
+                        training_state: HOME_STATE.to_string(),
                     })
                     .await?;
             }
@@ -153,7 +157,7 @@ pub async fn gym_training_menu(
             TrainingsCommands::AddTraining => {
                 log::info!("User wants to add training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Додати тренування").await?;
-                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку. \
+                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку. \n\n\
                 \n Також, потрібно буде трохи зачекати, генерую для тебе тренування)").await?;
                 dialogue
                     .update(State::AddTraining {
@@ -216,8 +220,8 @@ pub async fn diet_menu(
             DietCommands::AddDiet => {
                 log::info!("User wants to add training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Додати дієту").await?;
-                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку. \
-                \n Також, потрібно буде трохи зачекати, генерую для тебе дієту)").await?;
+                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку. \n\n \
+                Також, потрібно буде трохи зачекати, генерую для тебе дієту)").await?;
                 dialogue.update(State::AddDiet { phone_number }).await?;
             }
             DietCommands::DeleteDiet => {

@@ -6,7 +6,7 @@ use crate::consts::{
 use crate::db::database::Db;
 use crate::db::models::Users;
 use crate::errors::Result;
-use crate::models::{MenuCommands, MyDialogue, State};
+use crate::models::{MyDialogue, State, TrainingsCommands};
 use crate::utils::{format_prompt, make_keyboard};
 use std::ops::DerefMut;
 use std::sync::Arc;
@@ -53,19 +53,22 @@ pub async fn add_training(
     log::info!("Getting response for user {}", phone_number);
 
     let keyboard = make_keyboard(vec![
-        MenuCommands::MyGymTrainings.to_string(),
-        MenuCommands::MyHomeTrainings.to_string(),
-        MenuCommands::MyDiet.to_string(),
+        TrainingsCommands::AddTraining.to_string(),
+        TrainingsCommands::DeleteTraining.to_string(),
+        TrainingsCommands::ShowTrainings.to_string(),
+        TrainingsCommands::GoBack.to_string(),
     ]);
 
     bot.send_message(
         msg.chat.id,
-        format!("Тренування додано! А ось і воно: {}", response),
+        format!("Тренування додано! \n\n А ось і воно: \n\n {}", response),
     )
     .reply_markup(keyboard.resize_keyboard(true))
     .await?;
 
-    dialogue.update(State::ChangeMenu { phone_number }).await?;
+    dialogue
+        .update(State::HomeTrainingMenu { phone_number })
+        .await?;
     Ok(())
 }
 
@@ -89,29 +92,38 @@ pub async fn show_trainings(
     match trainings {
         Ok(trainings) => {
             let keyboard = make_keyboard(vec![
-                MenuCommands::MyGymTrainings.to_string(),
-                MenuCommands::MyHomeTrainings.to_string(),
-                MenuCommands::MyDiet.to_string(),
+                TrainingsCommands::AddTraining.to_string(),
+                TrainingsCommands::DeleteTraining.to_string(),
+                TrainingsCommands::ShowTrainings.to_string(),
+                TrainingsCommands::GoBack.to_string(),
             ]);
 
             let trainings: String = serde_json::from_value(trainings.trainings)?;
 
-            bot.send_message(msg.chat.id, format!("Ось твоє тренування: {}", trainings))
-                .reply_markup(keyboard.resize_keyboard(true))
+            bot.send_message(
+                msg.chat.id,
+                format!("Ось твоє тренування: \n\n {}", trainings),
+            )
+            .reply_markup(keyboard.resize_keyboard(true))
+            .await?;
+            dialogue
+                .update(State::HomeTrainingMenu { phone_number })
                 .await?;
-            dialogue.update(State::ChangeMenu { phone_number }).await?;
         }
         Err(_) => {
             let keyboard = make_keyboard(vec![
-                MenuCommands::MyGymTrainings.to_string(),
-                MenuCommands::MyHomeTrainings.to_string(),
-                MenuCommands::MyDiet.to_string(),
+                TrainingsCommands::AddTraining.to_string(),
+                TrainingsCommands::DeleteTraining.to_string(),
+                TrainingsCommands::ShowTrainings.to_string(),
+                TrainingsCommands::GoBack.to_string(),
             ]);
 
             bot.send_message(msg.chat.id, "Тренування відсутнє!".to_string())
                 .reply_markup(keyboard.resize_keyboard(true))
                 .await?;
-            dialogue.update(State::ChangeMenu { phone_number }).await?;
+            dialogue
+                .update(State::HomeTrainingMenu { phone_number })
+                .await?;
         }
     }
     Ok(())
@@ -138,27 +150,33 @@ pub async fn delete_training(
     match result {
         Ok(_) => {
             let keyboard = make_keyboard(vec![
-                MenuCommands::MyGymTrainings.to_string(),
-                MenuCommands::MyHomeTrainings.to_string(),
-                MenuCommands::MyDiet.to_string(),
+                TrainingsCommands::AddTraining.to_string(),
+                TrainingsCommands::DeleteTraining.to_string(),
+                TrainingsCommands::ShowTrainings.to_string(),
+                TrainingsCommands::GoBack.to_string(),
             ]);
 
             bot.send_message(msg.chat.id, "Тренування видалено!")
                 .reply_markup(keyboard.resize_keyboard(true))
                 .await?;
-            dialogue.update(State::ChangeMenu { phone_number }).await?;
+            dialogue
+                .update(State::HomeTrainingMenu { phone_number })
+                .await?;
         }
         Err(_) => {
             let keyboard = make_keyboard(vec![
-                MenuCommands::MyGymTrainings.to_string(),
-                MenuCommands::MyHomeTrainings.to_string(),
-                MenuCommands::MyDiet.to_string(),
+                TrainingsCommands::AddTraining.to_string(),
+                TrainingsCommands::DeleteTraining.to_string(),
+                TrainingsCommands::ShowTrainings.to_string(),
+                TrainingsCommands::GoBack.to_string(),
             ]);
 
             bot.send_message(msg.chat.id, "Тренування вже відсутнє!")
                 .reply_markup(keyboard.resize_keyboard(true))
                 .await?;
-            dialogue.update(State::ChangeMenu { phone_number }).await?;
+            dialogue
+                .update(State::HomeTrainingMenu { phone_number })
+                .await?;
         }
     }
     Ok(())

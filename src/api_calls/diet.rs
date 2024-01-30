@@ -3,7 +3,7 @@ use crate::consts::{PROMPT_MSG_DIET_WITHOUT_ARGS, PROMPT_MSG_DIET_WITH_ARGS};
 use crate::db::database::Db;
 use crate::db::models::Users;
 use crate::errors::Result;
-use crate::models::{MenuCommands, MyDialogue, State};
+use crate::models::{DietCommands, MyDialogue, State};
 use crate::utils::{format_prompt, make_keyboard};
 use std::ops::DerefMut;
 use std::sync::Arc;
@@ -36,19 +36,20 @@ pub async fn add_diet(
     log::info!("Getting response for user {}", phone_number);
 
     let keyboard = make_keyboard(vec![
-        MenuCommands::MyGymTrainings.to_string(),
-        MenuCommands::MyHomeTrainings.to_string(),
-        MenuCommands::MyDiet.to_string(),
+        DietCommands::AddDiet.to_string(),
+        DietCommands::ShowDiet.to_string(),
+        DietCommands::DeleteDiet.to_string(),
+        DietCommands::GoBack.to_string(),
     ]);
 
     bot.send_message(
         msg.chat.id,
-        format!("Дієта додана! А ось і воно: {}", response),
+        format!("Дієта додана! \n\n А ось і воно: \n\n {}", response),
     )
     .reply_markup(keyboard.resize_keyboard(true))
     .await?;
 
-    dialogue.update(State::ChangeMenu { phone_number }).await?;
+    dialogue.update(State::DietMenu { phone_number }).await?;
     Ok(())
 }
 
@@ -98,30 +99,32 @@ pub async fn show_diet(
 
     if let Ok(diet) = db.get_diet_list(user.id).await {
         let keyboard = make_keyboard(vec![
-            MenuCommands::MyGymTrainings.to_string(),
-            MenuCommands::MyHomeTrainings.to_string(),
-            MenuCommands::MyDiet.to_string(),
+            DietCommands::AddDiet.to_string(),
+            DietCommands::ShowDiet.to_string(),
+            DietCommands::DeleteDiet.to_string(),
+            DietCommands::GoBack.to_string(),
         ]);
 
         let diet: String = serde_json::from_value(diet.diet_list)?;
 
-        bot.send_message(msg.chat.id, format!("Ось твоя дієта: {:?}", diet))
+        bot.send_message(msg.chat.id, format!("Ось твоя дієта: \n\n {:?}", diet))
             .reply_markup(keyboard.resize_keyboard(true))
             .await?;
 
-        dialogue.update(State::ChangeMenu { phone_number }).await?;
+        dialogue.update(State::DietMenu { phone_number }).await?;
     } else {
         let keyboard = make_keyboard(vec![
-            MenuCommands::MyGymTrainings.to_string(),
-            MenuCommands::MyHomeTrainings.to_string(),
-            MenuCommands::MyDiet.to_string(),
+            DietCommands::AddDiet.to_string(),
+            DietCommands::ShowDiet.to_string(),
+            DietCommands::DeleteDiet.to_string(),
+            DietCommands::GoBack.to_string(),
         ]);
 
         bot.send_message(msg.chat.id, "Ти ще не додав дієту!".to_string())
             .reply_markup(keyboard.resize_keyboard(true))
             .await?;
 
-        dialogue.update(State::ChangeMenu { phone_number }).await?;
+        dialogue.update(State::DietMenu { phone_number }).await?;
     }
     Ok(())
 }
@@ -140,15 +143,16 @@ pub async fn delete_diet(
     db.delete_diet_list(user.id).await?;
 
     let keyboard = make_keyboard(vec![
-        MenuCommands::MyGymTrainings.to_string(),
-        MenuCommands::MyHomeTrainings.to_string(),
-        MenuCommands::MyDiet.to_string(),
+        DietCommands::AddDiet.to_string(),
+        DietCommands::ShowDiet.to_string(),
+        DietCommands::DeleteDiet.to_string(),
+        DietCommands::GoBack.to_string(),
     ]);
 
     bot.send_message(msg.chat.id, "Дієта видалена!".to_string())
         .reply_markup(keyboard.resize_keyboard(true))
         .await?;
 
-    dialogue.update(State::ChangeMenu { phone_number }).await?;
+    dialogue.update(State::DietMenu { phone_number }).await?;
     Ok(())
 }

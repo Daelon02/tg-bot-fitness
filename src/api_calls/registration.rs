@@ -21,7 +21,7 @@ pub async fn get_email(
                 let mut db = db.lock().await;
                 db.add_email(&phone_number, email).await?;
 
-                bot.send_message(msg.chat.id, "Дякую за пошту! Тепер відправ свій вік!")
+                bot.send_message(msg.chat.id, "Дякую за пошту! \n\n Тепер відправ свій вік!")
                     .await?;
                 dialogue.update(State::GetAge { phone_number }).await?;
             } else {
@@ -72,7 +72,7 @@ pub async fn get_number(
             log::info!("Adding new user to db");
             bot.send_message(
                 msg.chat.id,
-                "Ти новий користувач! Дякую за номер, тепер віправ свою пошту!",
+                "Ти новий користувач! \n\n Дякую за номер, тепер віправ свою пошту!",
             )
             .await?;
             db.insert_user(&contact.first_name, &contact.phone_number, &contact.user_id)
@@ -106,7 +106,7 @@ pub async fn get_age(
                     // process and send check to storage
                     bot.send_message(
                         msg.chat.id,
-                        "Дякую за вік! Тепер віправ свій зріст та вагу у форматі: зріст вага! Приклад: 185 90",
+                        "Дякую за вік! \n\n Тепер віправ свій зріст та вагу у форматі: зріст вага! \n\n Приклад: 185 90",
                     )
                         .await?;
                     dialogue
@@ -154,8 +154,8 @@ pub async fn get_height_and_weight(
                     // process and send check to storage
                     bot.send_message(
                         msg.chat.id,
-                        "Дякую за висоту та вагу! \
-                    Тепер я зможу розрахувати тренування та дієту для тебе! \
+                        "Дякую за висоту та вагу! \n\n \
+                    Тепер я зможу розрахувати тренування та дієту для тебе! \n\n \
                     Також, дякую за реєстрацію)",
                     )
                     .reply_markup(
