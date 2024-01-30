@@ -107,7 +107,7 @@ pub async fn show_diet(
 
         let diet: String = serde_json::from_value(diet.diet_list)?;
 
-        bot.send_message(msg.chat.id, format!("Ось твоя дієта: \n\n {:?}", diet))
+        bot.send_message(msg.chat.id, format!("Ось твоя дієта: \n\n {}", diet))
             .reply_markup(keyboard.resize_keyboard(true))
             .await?;
 
