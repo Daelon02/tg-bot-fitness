@@ -92,6 +92,7 @@ impl Db {
         Ok(user.is_some())
     }
 
+    #[allow(dead_code)]
     pub async fn get_user_by_id(&mut self, id: Uuid) -> Result<Users> {
         let user = crate::db::schema::users::table
             .filter(crate::db::schema::users::id.eq(id))
@@ -99,6 +100,7 @@ impl Db {
         Ok(user)
     }
 
+    #[allow(dead_code)]
     pub async fn delete_user(&mut self, phone_number: &str) -> Result<()> {
         diesel::delete(crate::db::schema::users::table)
             .filter(crate::db::schema::users::phone_number.eq(phone_number.to_string()))
@@ -140,6 +142,7 @@ impl Db {
         Ok(home_training)
     }
 
+    #[allow(dead_code)]
     pub async fn update_training(
         &mut self,
         user_id: Uuid,
@@ -184,6 +187,7 @@ impl Db {
         Ok(diet_list)
     }
 
+    #[allow(dead_code)]
     pub async fn update_diet_list(&mut self, user_id: Uuid, diet_list: Value) -> Result<()> {
         let _ = diesel::update(crate::db::schema::diet_lists_for_user::table)
             .filter(crate::db::schema::diet_lists_for_user::user_id.eq(user_id))

@@ -51,18 +51,13 @@ pub enum State {
         phone_number: String,
         training_state: String,
     },
-    DeleteTraining {
-        phone_number: String,
-        training_state: String,
-    },
-    ShowTrainings {
-        phone_number: String,
-        training_state: String,
-    },
     GymTrainingMenu {
         phone_number: String,
     },
     DietMenu {
+        phone_number: String,
+    },
+    AddDiet {
         phone_number: String,
     },
 }

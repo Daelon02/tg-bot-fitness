@@ -98,28 +98,31 @@ pub async fn get_age(
 ) -> crate::errors::Result<()> {
     let mut db = db.lock().await;
     log::info!("Start getting age!");
-    match msg.text().unwrap().parse::<i32>() {
-        Ok(age) => {
-            if age > 0 && age < 100 {
-                db.add_age(&phone_number, age).await?;
-                // process and send check to storage
-                bot.send_message(
-                    msg.chat.id,
-                    "Дякую за вік! Тепер віправ свій зріст та вагу у форматі: зріст вага! Приклад: 185 90",
-                )
-                .await?;
-                dialogue
-                    .update(State::GetWeightAndHeight { phone_number })
-                    .await?;
-            } else {
+    if let Some(age) = msg.text() {
+        match age.parse::<i32>() {
+            Ok(age) => {
+                if age > 0 && age < 100 {
+                    db.add_age(&phone_number, age).await?;
+                    // process and send check to storage
+                    bot.send_message(
+                        msg.chat.id,
+                        "Дякую за вік! Тепер віправ свій зріст та вагу у форматі: зріст вага! Приклад: 185 90",
+                    )
+                        .await?;
+                    dialogue
+                        .update(State::GetWeightAndHeight { phone_number })
+                        .await?;
+                } else {
+                    bot.send_message(msg.chat.id, "Вік не валідний!").await?;
+                }
+            }
+            Err(_) => {
                 bot.send_message(msg.chat.id, "Вік не валідний!").await?;
             }
         }
-        Err(_) => {
-            bot.send_message(msg.chat.id, "Вік не валідний!").await?;
-        }
+    } else {
+        bot.send_message(msg.chat.id, "Вік не валідний!").await?;
     }
-
     Ok(())
 }
 
@@ -132,7 +135,11 @@ pub async fn get_height_and_weight(
 ) -> crate::errors::Result<()> {
     log::info!("Start getting height and weight!");
     let mut db = db.lock().await;
-    let height_and_weight: Vec<&str> = msg.text().unwrap().split(' ').collect();
+    let height_and_weight: Vec<&str> = msg
+        .text()
+        .expect("Cannot get message value")
+        .split(' ')
+        .collect();
     if height_and_weight.len() != 2 {
         bot.send_message(msg.chat.id, "Висота та вага не валідні!")
             .await?;

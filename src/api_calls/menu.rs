@@ -1,8 +1,13 @@
+use crate::api_calls::diet::{delete_diet, show_diet};
+use crate::api_calls::trainings::{delete_training, show_trainings};
 use crate::consts::{GYM_STATE, HOME_STATE};
+use crate::db::database::Db;
 use crate::models::{DietCommands, MenuCommands, MyDialogue, State, TrainingsCommands};
 use crate::utils::make_keyboard;
+use std::sync::Arc;
 use teloxide::prelude::*;
 use teloxide::Bot;
+use tokio::sync::Mutex;
 
 pub async fn change_menu(
     bot: Bot,
@@ -76,6 +81,7 @@ pub async fn home_training_menu(
     bot: Bot,
     dialogue: MyDialogue,
     msg: Message,
+    db: Arc<Mutex<Db>>,
     phone_number: String,
 ) -> crate::errors::Result<()> {
     log::info!("User in home training menu {}", msg.chat.id);
@@ -89,29 +95,33 @@ pub async fn home_training_menu(
                 dialogue
                     .update(State::AddTraining {
                         phone_number,
-                        training_state: HOME_STATE.to_string(),
+                        training_state: GYM_STATE.to_string(),
                     })
                     .await?;
             }
             TrainingsCommands::DeleteTraining => {
                 log::info!("User wants to delete training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Видалити тренування").await?;
-                dialogue
-                    .update(State::DeleteTraining {
-                        phone_number,
-                        training_state: HOME_STATE.to_string(),
-                    })
-                    .await?;
+                delete_training(
+                    bot.clone(),
+                    dialogue.clone(),
+                    msg.clone(),
+                    db,
+                    (phone_number.clone(), HOME_STATE.to_string()),
+                )
+                .await?
             }
             TrainingsCommands::ShowTrainings => {
                 log::info!("User wants to show training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Показати тренування").await?;
-                dialogue
-                    .update(State::ShowTrainings {
-                        phone_number,
-                        training_state: HOME_STATE.to_string(),
-                    })
-                    .await?;
+                show_trainings(
+                    bot.clone(),
+                    dialogue.clone(),
+                    msg.clone(),
+                    db,
+                    (phone_number.clone(), HOME_STATE.to_string()),
+                )
+                .await?
             }
             TrainingsCommands::GoBack => {
                 log::info!("User wants to go back {}", msg.chat.id);
@@ -134,6 +144,7 @@ pub async fn gym_training_menu(
     bot: Bot,
     dialogue: MyDialogue,
     msg: Message,
+    db: Arc<Mutex<Db>>,
     phone_number: String,
 ) -> crate::errors::Result<()> {
     if let Some(training_button) = msg.text() {
@@ -142,7 +153,8 @@ pub async fn gym_training_menu(
             TrainingsCommands::AddTraining => {
                 log::info!("User wants to add training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Додати тренування").await?;
-                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку.").await?;
+                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку. \
+                \n Також, потрібно буде трохи зачекати, генерую для тебе тренування)").await?;
                 dialogue
                     .update(State::AddTraining {
                         phone_number,
@@ -153,22 +165,26 @@ pub async fn gym_training_menu(
             TrainingsCommands::DeleteTraining => {
                 log::info!("User wants to delete training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Видалити тренування").await?;
-                dialogue
-                    .update(State::DeleteTraining {
-                        phone_number,
-                        training_state: GYM_STATE.to_string(),
-                    })
-                    .await?;
+                delete_training(
+                    bot.clone(),
+                    dialogue.clone(),
+                    msg.clone(),
+                    db,
+                    (phone_number.clone(), GYM_STATE.to_string()),
+                )
+                .await?;
             }
             TrainingsCommands::ShowTrainings => {
                 log::info!("User wants to show training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Показати тренування").await?;
-                dialogue
-                    .update(State::ShowTrainings {
-                        phone_number,
-                        training_state: GYM_STATE.to_string(),
-                    })
-                    .await?;
+                show_trainings(
+                    bot.clone(),
+                    dialogue.clone(),
+                    msg.clone(),
+                    db,
+                    (phone_number.clone(), GYM_STATE.to_string()),
+                )
+                .await?;
             }
             TrainingsCommands::GoBack => {
                 log::info!("User wants to go back {}", msg.chat.id);
@@ -192,20 +208,44 @@ pub async fn diet_menu(
     dialogue: MyDialogue,
     msg: Message,
     phone_number: String,
+    db: Arc<Mutex<Db>>,
 ) -> crate::errors::Result<()> {
-    if let Some(diet_button) = msg.text() {
-        let diet_button = DietCommands::from(diet_button.to_string());
-        match diet_button {
+    if let Some(training_button) = msg.text() {
+        let training_button = DietCommands::from(training_button.to_string());
+        match training_button {
             DietCommands::AddDiet => {
+                log::info!("User wants to add training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Додати дієту").await?;
+                bot.send_message(msg.chat.id, "Напишить будь-ласка, чи є у вас якісь протипоказання, якщо ні, просто відправте крапку. \
+                \n Також, потрібно буде трохи зачекати, генерую для тебе дієту)").await?;
+                dialogue.update(State::AddDiet { phone_number }).await?;
             }
             DietCommands::DeleteDiet => {
+                log::info!("User wants to delete training {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Видалити дієту").await?;
+                delete_diet(
+                    bot.clone(),
+                    dialogue.clone(),
+                    msg.clone(),
+                    db,
+                    phone_number.clone(),
+                )
+                .await?;
             }
             DietCommands::ShowDiet => {
+                log::info!("User wants to show diet {}", msg.chat.id);
                 bot.send_message(msg.chat.id, "Показати дієту").await?;
+                show_diet(
+                    bot.clone(),
+                    dialogue.clone(),
+                    msg.clone(),
+                    db,
+                    phone_number.clone(),
+                )
+                .await?;
             }
             DietCommands::GoBack => {
+                log::info!("User wants to go back {}", msg.chat.id);
                 let keyboard = make_keyboard(vec![
                     MenuCommands::MyGymTrainings.to_string(),
                     MenuCommands::MyHomeTrainings.to_string(),

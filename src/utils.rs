@@ -1,7 +1,8 @@
 use crate::api_calls::basic_methods::{cancel, help, invalid_state, start};
+use crate::api_calls::diet::add_diet;
 use crate::api_calls::menu::{change_menu, diet_menu, gym_training_menu, home_training_menu};
 use crate::api_calls::registration::{get_age, get_email, get_height_and_weight, get_number};
-use crate::api_calls::trainings::{add_training, delete_training, show_trainings};
+use crate::api_calls::trainings::add_training;
 use crate::consts::{PROMPT_MSG_AGE, PROMPT_MSG_HEIGHT, PROMPT_MSG_WEIGHT};
 use crate::db::models::Users;
 use crate::models::Command;
@@ -48,20 +49,7 @@ pub fn schema() -> Handler<'static, DependencyMap, crate::errors::Result<()>, Dp
             }]
             .endpoint(add_training),
         )
-        .branch(
-            case![State::DeleteTraining {
-                phone_number,
-                training_state
-            }]
-            .endpoint(delete_training),
-        )
-        .branch(
-            case![State::ShowTrainings {
-                phone_number,
-                training_state
-            }]
-            .endpoint(show_trainings),
-        )
+        .branch(case![State::AddDiet { phone_number }].endpoint(add_diet))
         .branch(callback_query_handler)
         .branch(dptree::endpoint(invalid_state));
 
@@ -150,7 +138,7 @@ pub fn is_valid_email(email: &str) -> crate::errors::Result<bool> {
 
 pub fn format_prompt(prompt: Option<&str>, const1: &str, const2: &str, user: Users) -> String {
     if let Some(prompt) = prompt {
-        if prompt.contains(".") {
+        if prompt.contains('.') {
             format!(
                 "{} {} {:?} {} {:?} {} {:?}",
                 const2,

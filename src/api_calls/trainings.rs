@@ -50,6 +50,8 @@ pub async fn add_training(
         .await?
     };
 
+    log::info!("Getting response for user {}", phone_number);
+
     let keyboard = make_keyboard(vec![
         MenuCommands::MyGymTrainings.to_string(),
         MenuCommands::MyHomeTrainings.to_string(),
@@ -79,25 +81,39 @@ pub async fn show_trainings(
     let user = db.get_user(&phone_number).await?;
     let user_id = user.id;
     let trainings = if training_state == HOME_STATE {
-        db.get_training(user_id, HOME_STATE.to_string()).await?
+        db.get_training(user_id, HOME_STATE.to_string()).await
     } else {
-        db.get_training(user_id, GYM_STATE.to_string()).await?
+        db.get_training(user_id, GYM_STATE.to_string()).await
     };
 
-    let keyboard = make_keyboard(vec![
-        MenuCommands::MyGymTrainings.to_string(),
-        MenuCommands::MyHomeTrainings.to_string(),
-        MenuCommands::MyDiet.to_string(),
-    ]);
+    match trainings {
+        Ok(trainings) => {
+            let keyboard = make_keyboard(vec![
+                MenuCommands::MyGymTrainings.to_string(),
+                MenuCommands::MyHomeTrainings.to_string(),
+                MenuCommands::MyDiet.to_string(),
+            ]);
 
-    bot.send_message(
-        msg.chat.id,
-        format!("Ось твоє тренування: {}", trainings.trainings),
-    )
-    .reply_markup(keyboard.resize_keyboard(true))
-    .await?;
+            let trainings: String = serde_json::from_value(trainings.trainings)?;
 
-    dialogue.update(State::ChangeMenu { phone_number }).await?;
+            bot.send_message(msg.chat.id, format!("Ось твоє тренування: {}", trainings))
+                .reply_markup(keyboard.resize_keyboard(true))
+                .await?;
+            dialogue.update(State::ChangeMenu { phone_number }).await?;
+        }
+        Err(_) => {
+            let keyboard = make_keyboard(vec![
+                MenuCommands::MyGymTrainings.to_string(),
+                MenuCommands::MyHomeTrainings.to_string(),
+                MenuCommands::MyDiet.to_string(),
+            ]);
+
+            bot.send_message(msg.chat.id, "Тренування відсутнє!".to_string())
+                .reply_markup(keyboard.resize_keyboard(true))
+                .await?;
+            dialogue.update(State::ChangeMenu { phone_number }).await?;
+        }
+    }
     Ok(())
 }
 
@@ -113,23 +129,38 @@ pub async fn delete_training(
     let user = db.get_user(&phone_number).await?;
     let user_id = user.id;
 
-    if training_status == HOME_STATE {
-        db.delete_training(user_id, HOME_STATE.to_string()).await?;
+    let result = if training_status == HOME_STATE {
+        db.delete_training(user_id, HOME_STATE.to_string()).await
     } else {
-        db.delete_training(user_id, GYM_STATE.to_string()).await?;
+        db.delete_training(user_id, GYM_STATE.to_string()).await
+    };
+
+    match result {
+        Ok(_) => {
+            let keyboard = make_keyboard(vec![
+                MenuCommands::MyGymTrainings.to_string(),
+                MenuCommands::MyHomeTrainings.to_string(),
+                MenuCommands::MyDiet.to_string(),
+            ]);
+
+            bot.send_message(msg.chat.id, "Тренування видалено!")
+                .reply_markup(keyboard.resize_keyboard(true))
+                .await?;
+            dialogue.update(State::ChangeMenu { phone_number }).await?;
+        }
+        Err(_) => {
+            let keyboard = make_keyboard(vec![
+                MenuCommands::MyGymTrainings.to_string(),
+                MenuCommands::MyHomeTrainings.to_string(),
+                MenuCommands::MyDiet.to_string(),
+            ]);
+
+            bot.send_message(msg.chat.id, "Тренування вже відсутнє!")
+                .reply_markup(keyboard.resize_keyboard(true))
+                .await?;
+            dialogue.update(State::ChangeMenu { phone_number }).await?;
+        }
     }
-
-    let keyboard = make_keyboard(vec![
-        MenuCommands::MyGymTrainings.to_string(),
-        MenuCommands::MyHomeTrainings.to_string(),
-        MenuCommands::MyDiet.to_string(),
-    ]);
-
-    bot.send_message(msg.chat.id, "Тренування видалено!")
-        .reply_markup(keyboard.resize_keyboard(true))
-        .await?;
-
-    dialogue.update(State::ChangeMenu { phone_number }).await?;
     Ok(())
 }
 
@@ -143,19 +174,13 @@ pub async fn process_training(
     status: String,
 ) -> Result<String> {
     let response = if let Some(text) = msg.text() {
-        log::info!("Start sending prompt for training!");
-        open_ai_client
-            .lock()
-            .await
-            .send_message(&format_prompt(Some(text), const1, const2, user.clone()))
-            .await?
+        let prompt = format_prompt(Some(text), const1, const2, user.clone());
+        log::info!("Start sending prompt for training {}!", prompt);
+        open_ai_client.lock().await.send_message(&prompt).await?
     } else {
-        log::info!("Start sending prompt for training!");
-        open_ai_client
-            .lock()
-            .await
-            .send_message(&format_prompt(None, const1, const2, user.clone()))
-            .await?
+        let prompt = format_prompt(None, const1, const2, user.clone());
+        log::info!("Start sending prompt for training {}!", prompt);
+        open_ai_client.lock().await.send_message(&prompt).await?
     };
 
     let user_id = user.id;
