@@ -17,10 +17,10 @@ pub async fn start(bot: Bot, dialogue: MyDialogue, msg: Message) -> crate::error
     let markup = KeyboardMarkup::new([[button]])
         .resize_keyboard(true)
         .one_time_keyboard(true);
-    bot.send_message(msg.chat.id, "Привіт! Я бот для тренувань! \
+    bot.send_message(msg.chat.id, "Привіт! Я бот для тренувань! \n\n \
                 Тут ти можешь зробити для себе тренування у залі, \
-                тренування удома, та дієту, спеціально підібрану для тебе! \
-                Будь-ласка, відправ спочатку свій номер телефона а потім пошту, для реєстрації або перевірки чи ти вже з нами!")
+                тренування удома, та дієту, спеціально підібрану для тебе! \n\n \
+                Будь-ласка, відправ спочатку свій номер телефона а потім пошту, для реєстрації або перевірки чи ти вже зареєстрованний!")
         .reply_markup(markup)
         .allow_sending_without_reply(true)
         .await?;
