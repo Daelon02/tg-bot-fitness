@@ -35,6 +35,9 @@ pub enum State {
         phone_number: String,
     },
     ChangeMenu,
+    HomeTrainingMenu,
+    GymTrainingMenu,
+    DietMenu,
 }
 
 impl Display for MenuCommands {
@@ -62,7 +65,7 @@ pub enum TrainingsCommands {
     AddTraining,
     DeleteTraining,
     ShowTrainings,
-    GoBack
+    GoBack,
 }
 
 impl Display for TrainingsCommands {
@@ -71,7 +74,7 @@ impl Display for TrainingsCommands {
             TrainingsCommands::AddTraining => write!(f, "Додати тренування"),
             TrainingsCommands::DeleteTraining => write!(f, "Видалити тренування"),
             TrainingsCommands::ShowTrainings => write!(f, "Показати тренування"),
-            TrainingsCommands::GoBack => write!(f, "Назад"),
+            TrainingsCommands::GoBack => write!(f, "На головну"),
         }
     }
 }
@@ -82,7 +85,7 @@ impl From<String> for TrainingsCommands {
             "Додати тренування" => TrainingsCommands::AddTraining,
             "Видалити тренування" => TrainingsCommands::DeleteTraining,
             "Показати тренування" => TrainingsCommands::ShowTrainings,
-            "Назад" => TrainingsCommands::GoBack,
+            "На головну" => TrainingsCommands::GoBack,
 
             _ => panic!("Unknown command"),
         }
@@ -93,7 +96,7 @@ pub enum DietCommands {
     AddDiet,
     DeleteDiet,
     ShowDiet,
-    GoBack
+    GoBack,
 }
 
 impl Display for DietCommands {
@@ -102,7 +105,7 @@ impl Display for DietCommands {
             DietCommands::AddDiet => write!(f, "Додати дієту"),
             DietCommands::DeleteDiet => write!(f, "Видалити дієту"),
             DietCommands::ShowDiet => write!(f, "Показати дієту"),
-            DietCommands::GoBack => write!(f, "Назад"),
+            DietCommands::GoBack => write!(f, "На головну"),
         }
     }
 }
@@ -113,7 +116,7 @@ impl From<String> for DietCommands {
             "Додати дієту" => DietCommands::AddDiet,
             "Видалити дієту" => DietCommands::DeleteDiet,
             "Показати дієту" => DietCommands::ShowDiet,
-            "Назад" => DietCommands::GoBack,
+            "На головну" => DietCommands::GoBack,
             _ => panic!("Unknown command"),
         }
     }

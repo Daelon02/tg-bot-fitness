@@ -1,5 +1,5 @@
 use crate::api_calls::basic_methods::{cancel, help, invalid_state, start};
-use crate::api_calls::menu::change_menu;
+use crate::api_calls::menu::{change_menu, diet_menu, home_training_menu};
 use crate::api_calls::registration::{get_email, get_number};
 use crate::models::Command;
 use crate::models::State;
@@ -33,6 +33,9 @@ pub fn schema() -> Handler<'static, DependencyMap, crate::errors::Result<()>, Dp
         .branch(command_handler)
         .branch(case![State::GetPhoneNumber].endpoint(get_number))
         .branch(case![State::ChangeMenu].endpoint(change_menu))
+        .branch(case![State::HomeTrainingMenu].endpoint(home_training_menu))
+        .branch(case![State::GymTrainingMenu].endpoint(home_training_menu))
+        .branch(case![State::DietMenu].endpoint(diet_menu))
         .branch(callback_query_handler)
         .branch(dptree::endpoint(invalid_state));
 
