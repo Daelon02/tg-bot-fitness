@@ -14,12 +14,14 @@ pub async fn change_menu(
             TrainingsCommands::AddTraining.to_string(),
             TrainingsCommands::DeleteTraining.to_string(),
             TrainingsCommands::ShowTrainings.to_string(),
+            TrainingsCommands::GoBack.to_string(),
         ];
 
         let diet_buttons = vec![
             DietCommands::AddDiet.to_string(),
             DietCommands::DeleteDiet.to_string(),
             DietCommands::ShowDiet.to_string(),
+            DietCommands::GoBack.to_string(),
         ];
 
         match menu_button {
