@@ -80,7 +80,7 @@ impl From<String> for MenuCommands {
             "Мої тренування" => MenuCommands::MyGymTrainings,
             "Моє харчування" => MenuCommands::MyDiet,
             "На головну" => MenuCommands::GoBack,
-            _ => panic!("Unknown command"),
+            _ => MenuCommands::GoBack,
         }
     }
 }
@@ -111,7 +111,7 @@ impl From<String> for TrainingsCommands {
             "Показати тренування" => TrainingsCommands::ShowTrainings,
             "На головну" => TrainingsCommands::GoBack,
 
-            _ => panic!("Unknown command"),
+            _ => TrainingsCommands::GoBack,
         }
     }
 }
@@ -141,7 +141,7 @@ impl From<String> for DietCommands {
             "Видалити дієту" => DietCommands::DeleteDiet,
             "Показати дієту" => DietCommands::ShowDiet,
             "На головну" => DietCommands::GoBack,
-            _ => panic!("Unknown command"),
+            _ => DietCommands::GoBack,
         }
     }
 }
