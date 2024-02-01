@@ -66,9 +66,16 @@ pub async fn add_training(
     .reply_markup(keyboard.resize_keyboard(true))
     .await?;
 
-    dialogue
-        .update(State::HomeTrainingMenu { phone_number })
-        .await?;
+    if training_state == HOME_STATE {
+        dialogue
+            .update(State::HomeTrainingMenu { phone_number })
+            .await?;
+    } else {
+        dialogue
+            .update(State::GymTrainingMenu { phone_number })
+            .await?;
+    }
+
     Ok(())
 }
 
