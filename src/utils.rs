@@ -1,6 +1,8 @@
 use crate::api_calls::basic_methods::{cancel, help, invalid_state, start};
 use crate::api_calls::diet::add_diet;
-use crate::api_calls::menu::{change_menu, diet_menu, gym_training_menu, home_training_menu};
+use crate::api_calls::menu::{
+    change_menu, diet_menu, gym_training_menu, home_training_menu, update_data,
+};
 use crate::api_calls::registration::{get_age, get_email, get_height_and_weight, get_number};
 use crate::api_calls::trainings::add_training;
 use crate::consts::{PROMPT_MSG_AGE, PROMPT_MSG_HEIGHT, PROMPT_MSG_WEIGHT};
@@ -50,6 +52,7 @@ pub fn schema() -> Handler<'static, DependencyMap, crate::errors::Result<()>, Dp
             .endpoint(add_training),
         )
         .branch(case![State::AddDiet { phone_number }].endpoint(add_diet))
+        .branch(case![State::UpdateData { phone_number }].endpoint(update_data))
         .branch(callback_query_handler)
         .branch(dptree::endpoint(invalid_state));
 

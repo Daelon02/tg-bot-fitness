@@ -59,6 +59,7 @@ pub async fn get_number(
                         MenuCommands::MyGymTrainings.to_string(),
                         MenuCommands::MyHomeTrainings.to_string(),
                         MenuCommands::MyDiet.to_string(),
+                        MenuCommands::UpdateData.to_string(),
                     ])
                     .resize_keyboard(true),
                 )
@@ -156,13 +157,15 @@ pub async fn get_height_and_weight(
                         msg.chat.id,
                         "Дякую за висоту та вагу! \n\n \
                     Тепер я зможу розрахувати тренування та дієту для тебе! \n\n \
-                    Також, дякую за реєстрацію)",
+                    Також, дякую за реєстрацію)\n\n \
+                    Ти можешь додати свої данні (обхват тіла) в меню 'Оновити данні'",
                     )
                     .reply_markup(
                         make_keyboard(vec![
                             MenuCommands::MyGymTrainings.to_string(),
                             MenuCommands::MyHomeTrainings.to_string(),
                             MenuCommands::MyDiet.to_string(),
+                            MenuCommands::UpdateData.to_string(),
                         ])
                         .resize_keyboard(true),
                     )

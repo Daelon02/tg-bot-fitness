@@ -30,6 +30,9 @@ pub enum Errors {
 
     #[error(transparent)]
     OpenAIError(#[from] async_openai::error::OpenAIError),
+
+    #[error(transparent)]
+    ParseIntError(#[from] std::num::ParseIntError),
 }
 
 pub type Result<T> = std::result::Result<T, Errors>;

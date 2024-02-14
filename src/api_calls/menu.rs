@@ -4,10 +4,12 @@ use crate::consts::{GYM_STATE, HOME_STATE};
 use crate::db::database::Db;
 use crate::models::{DietCommands, MenuCommands, MyDialogue, State, TrainingsCommands};
 use crate::utils::make_keyboard;
+use std::collections::HashMap;
 use std::sync::Arc;
 use teloxide::prelude::*;
 use teloxide::Bot;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 pub async fn change_menu(
     bot: Bot,
@@ -66,11 +68,23 @@ pub async fn change_menu(
                     MenuCommands::MyGymTrainings.to_string(),
                     MenuCommands::MyHomeTrainings.to_string(),
                     MenuCommands::MyDiet.to_string(),
+                    MenuCommands::UpdateData.to_string(),
                 ]);
                 bot.send_message(msg.chat.id, MenuCommands::GoBack.to_string())
                     .reply_markup(keyboard.resize_keyboard(true))
                     .await?;
                 dialogue.update(State::ChangeMenu { phone_number }).await?;
+            }
+            MenuCommands::UpdateData => {
+                log::info!("User wants to update data {}", msg.chat.id);
+                bot.send_message(msg.chat.id, "Оновити дані").await?;
+                bot.send_message(
+                    msg.chat.id,
+                    "Хочете оновити дані? \n\n\
+     Добре, тільки скидуйте у такому вигляді: вік: 21, зріст: 185, вага: 112",
+                )
+                .await?;
+                dialogue.update(State::UpdateData { phone_number }).await?;
             }
         }
     }
@@ -133,6 +147,7 @@ pub async fn home_training_menu(
                     MenuCommands::MyGymTrainings.to_string(),
                     MenuCommands::MyHomeTrainings.to_string(),
                     MenuCommands::MyDiet.to_string(),
+                    MenuCommands::UpdateData.to_string(),
                 ]);
                 bot.send_message(msg.chat.id, MenuCommands::GoBack.to_string())
                     .reply_markup(keyboard.resize_keyboard(true))
@@ -196,6 +211,7 @@ pub async fn gym_training_menu(
                     MenuCommands::MyGymTrainings.to_string(),
                     MenuCommands::MyHomeTrainings.to_string(),
                     MenuCommands::MyDiet.to_string(),
+                    MenuCommands::UpdateData.to_string(),
                 ]);
                 bot.send_message(msg.chat.id, MenuCommands::GoBack.to_string())
                     .reply_markup(keyboard.resize_keyboard(true))
@@ -254,6 +270,7 @@ pub async fn diet_menu(
                     MenuCommands::MyGymTrainings.to_string(),
                     MenuCommands::MyHomeTrainings.to_string(),
                     MenuCommands::MyDiet.to_string(),
+                    MenuCommands::UpdateData.to_string(),
                 ]);
                 bot.send_message(msg.chat.id, MenuCommands::GoBack.to_string())
                     .reply_markup(keyboard.resize_keyboard(true))
@@ -263,4 +280,126 @@ pub async fn diet_menu(
         }
     }
     Ok(())
+}
+
+pub async fn update_data(
+    bot: Bot,
+    dialogue: MyDialogue,
+    msg: Message,
+    phone_number: String,
+    db: Arc<Mutex<Db>>,
+) -> crate::errors::Result<()> {
+    match msg.text() {
+        Some(data) => {
+            let mut db = db.lock().await;
+            let user = db.get_user(&phone_number).await?;
+            let data = parse_string(data);
+            update_age(
+                data.clone(),
+                bot.clone(),
+                msg.clone(),
+                phone_number.clone(),
+                &mut db,
+                dialogue.clone(),
+                user.id,
+            )
+            .await?;
+
+            update_height(
+                data.clone(),
+                bot.clone(),
+                msg.clone(),
+                phone_number.clone(),
+                &mut db,
+                dialogue.clone(),
+                user.id,
+            )
+            .await?;
+
+            bot.send_message(msg.chat.id, "Дані оновлено!").await?;
+            dialogue.update(State::ChangeMenu { phone_number }).await?;
+        }
+        None => {
+            bot.send_message(
+                msg.chat.id,
+                "На жаль, я не зможу зареєструвати тебе без даних!",
+            )
+            .await?;
+            return Ok(());
+        }
+    }
+
+    Ok(())
+}
+
+async fn update_age(
+    data: HashMap<String, String>,
+    bot: Bot,
+    msg: Message,
+    phone_number: String,
+    db: &mut Db,
+    dialogue: MyDialogue,
+    id: Uuid,
+) -> crate::errors::Result<()> {
+    let age = match data.get("вік") {
+        Some(age) => age.parse::<i32>()?,
+        None => {
+            bot.send_message(msg.chat.id, "Вік не валідний!").await?;
+            dialogue
+                .update(State::UpdateData {
+                    phone_number: phone_number.clone(),
+                })
+                .await?;
+            return Ok(());
+        }
+    };
+
+    db.update_age(id, age).await?;
+
+    Ok(())
+}
+
+async fn update_height(
+    data: HashMap<String, String>,
+    bot: Bot,
+    msg: Message,
+    phone_number: String,
+    db: &mut Db,
+    dialogue: MyDialogue,
+    id: Uuid,
+) -> crate::errors::Result<()> {
+    let (height, weight) = match (data.get("зріст"), data.get("вага")) {
+        (Some(height), Some(weight)) => (height.parse::<i32>()?, weight.parse::<i32>()?),
+        _ => {
+            bot.send_message(msg.chat.id, "Висота та вага не валідні!")
+                .await?;
+            dialogue
+                .update(State::UpdateData {
+                    phone_number: phone_number.clone(),
+                })
+                .await?;
+            return Ok(());
+        }
+    };
+
+    db.update_height_and_weight(id, height, weight).await?;
+
+    Ok(())
+}
+
+fn parse_string(data: &str) -> HashMap<String, String> {
+    let vec = data.split(", ").collect::<Vec<&str>>();
+    let mut data = HashMap::new();
+
+    // Обработка каждой подстроки
+    for vec_str in vec {
+        // Разделение подстроки на ключ и значение по двоеточию
+        let pare: Vec<&str> = vec_str.split(": ").collect();
+        // Получение ключа и значения
+        let key = pare[0].to_string();
+        let value = pare[1].trim().to_string(); // Удаление пробелов в начале и конце значения
+                                                // Добавление данных в хэш-мап
+        data.insert(key, value);
+    }
+    data
 }

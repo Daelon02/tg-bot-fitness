@@ -24,6 +24,7 @@ pub enum MenuCommands {
     MyHomeTrainings,
     MyGymTrainings,
     MyDiet,
+    UpdateData,
     GoBack,
 }
 
@@ -60,6 +61,9 @@ pub enum State {
     AddDiet {
         phone_number: String,
     },
+    UpdateData {
+        phone_number: String,
+    },
 }
 
 impl Display for MenuCommands {
@@ -68,6 +72,7 @@ impl Display for MenuCommands {
             MenuCommands::MyHomeTrainings => write!(f, "Мої домашні тренування"),
             MenuCommands::MyGymTrainings => write!(f, "Мої тренування"),
             MenuCommands::MyDiet => write!(f, "Моє харчування"),
+            MenuCommands::UpdateData => write!(f, "Оновити дані"),
             MenuCommands::GoBack => write!(f, "На головну"),
         }
     }
@@ -79,6 +84,7 @@ impl From<String> for MenuCommands {
             "Мої домашні тренування" => MenuCommands::MyHomeTrainings,
             "Мої тренування" => MenuCommands::MyGymTrainings,
             "Моє харчування" => MenuCommands::MyDiet,
+            "Оновити дані" => MenuCommands::UpdateData,
             "На головну" => MenuCommands::GoBack,
             _ => MenuCommands::GoBack,
         }

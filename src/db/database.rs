@@ -202,4 +202,28 @@ impl Db {
             .execute(&mut self.conn)?;
         Ok(())
     }
+
+    pub async fn update_age(&mut self, user_id: Uuid, age: i32) -> Result<()> {
+        let _ = diesel::update(crate::db::schema::users::table)
+            .filter(crate::db::schema::users::id.eq(user_id))
+            .set(crate::db::schema::users::age.eq(age))
+            .execute(&mut self.conn)?;
+        Ok(())
+    }
+
+    pub async fn update_height_and_weight(
+        &mut self,
+        user_id: Uuid,
+        height: i32,
+        weight: i32,
+    ) -> Result<()> {
+        let _ = diesel::update(crate::db::schema::users::table)
+            .filter(crate::db::schema::users::id.eq(user_id))
+            .set((
+                crate::db::schema::users::height.eq(height),
+                crate::db::schema::users::weight.eq(weight),
+            ))
+            .execute(&mut self.conn)?;
+        Ok(())
+    }
 }
