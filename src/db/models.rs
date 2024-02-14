@@ -39,3 +39,29 @@ pub struct TrainingsForUser {
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
+
+#[derive(Queryable, Selectable, Insertable, Clone, Default)]
+#[diesel(table_name = crate::db::schema::before_sizes)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct BeforeSizes {
+    pub id: Uuid,
+    pub chest: i32,
+    pub waist: i32,
+    pub hips: i32,
+    pub hand_biceps: i32,
+    pub leg_biceps: i32,
+    pub calf: i32,
+}
+
+#[derive(Queryable, Selectable, Insertable, Clone, Default)]
+#[diesel(table_name = crate::db::schema::after_sizes)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct AfterSizes {
+    pub id: Uuid,
+    pub chest: i32,
+    pub waist: i32,
+    pub hips: i32,
+    pub hand_biceps: i32,
+    pub leg_biceps: i32,
+    pub calf: i32,
+}

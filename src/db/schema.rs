@@ -31,3 +31,27 @@ diesel::table! {
     updated_at -> Nullable<Timestamptz>
     }
 }
+
+diesel::table! {
+    before_sizes (id) {
+    id -> Uuid,
+    chest -> Integer,
+    waist -> Integer,
+    hips -> Integer,
+    hand_biceps -> Integer,
+    leg_biceps -> Integer,
+    calf -> Integer,
+    }
+}
+
+diesel::table! {
+    after_sizes (id) {
+    id -> Uuid,
+    chest -> Integer,
+    waist -> Integer,
+    hips -> Integer,
+    hand_biceps -> Integer,
+    leg_biceps -> Integer,
+    calf -> Integer,
+    }
+}

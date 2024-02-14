@@ -24,7 +24,7 @@ pub enum MenuCommands {
     MyHomeTrainings,
     MyGymTrainings,
     MyDiet,
-    UpdateData,
+    Data,
     GoBack,
 }
 
@@ -61,7 +61,13 @@ pub enum State {
     AddDiet {
         phone_number: String,
     },
+    Data {
+        phone_number: String,
+    },
     UpdateData {
+        phone_number: String,
+    },
+    UpdateSize {
         phone_number: String,
     },
 }
@@ -72,7 +78,7 @@ impl Display for MenuCommands {
             MenuCommands::MyHomeTrainings => write!(f, "Мої домашні тренування"),
             MenuCommands::MyGymTrainings => write!(f, "Мої тренування"),
             MenuCommands::MyDiet => write!(f, "Моє харчування"),
-            MenuCommands::UpdateData => write!(f, "Оновити дані"),
+            MenuCommands::Data => write!(f, "Мої дані"),
             MenuCommands::GoBack => write!(f, "На головну"),
         }
     }
@@ -84,7 +90,7 @@ impl From<String> for MenuCommands {
             "Мої домашні тренування" => MenuCommands::MyHomeTrainings,
             "Мої тренування" => MenuCommands::MyGymTrainings,
             "Моє харчування" => MenuCommands::MyDiet,
-            "Оновити дані" => MenuCommands::UpdateData,
+            "Мої дані" => MenuCommands::Data,
             "На головну" => MenuCommands::GoBack,
             _ => MenuCommands::GoBack,
         }
@@ -148,6 +154,39 @@ impl From<String> for DietCommands {
             "Показати дієту" => DietCommands::ShowDiet,
             "На головну" => DietCommands::GoBack,
             _ => DietCommands::GoBack,
+        }
+    }
+}
+
+pub enum DataCommands {
+    UpdateData,
+    UpdateSize,
+    ShowData,
+    ShowStatistics,
+    GoBack,
+}
+
+impl Display for DataCommands {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DataCommands::UpdateData => write!(f, "Оновити дані"),
+            DataCommands::UpdateSize => write!(f, "Оновити розміри тіла"),
+            DataCommands::ShowData => write!(f, "Показати дані"),
+            DataCommands::ShowStatistics => write!(f, "Показати статистику"),
+            DataCommands::GoBack => write!(f, "На головну"),
+        }
+    }
+}
+
+impl From<String> for DataCommands {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "Оновити дані" => DataCommands::UpdateData,
+            "Оновити розміри тіла" => DataCommands::UpdateSize,
+            "Показати дані" => DataCommands::ShowData,
+            "Показати статистику" => DataCommands::ShowStatistics,
+            "На головну" => DataCommands::GoBack,
+            _ => DataCommands::GoBack,
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::db::models::{DietListForUser, TrainingsForUser, Users};
+use crate::db::models::{AfterSizes, BeforeSizes, DietListForUser, TrainingsForUser, Users};
 use crate::errors::Result;
 use diesel::prelude::*;
 use diesel::{Connection, PgConnection};
@@ -225,5 +225,88 @@ impl Db {
             ))
             .execute(&mut self.conn)?;
         Ok(())
+    }
+
+    pub async fn update_size(
+        &mut self,
+        user_id: Uuid,
+        size: Vec<String>,
+        is_after: bool,
+    ) -> Result<()> {
+        let chest = size[0].parse()?;
+        let waist = size[1].parse()?;
+        let hips = size[2].parse()?;
+        let hand_biceps = size[3].parse()?;
+        let leg_biceps = size[4].parse()?;
+        let calf = size[5].parse()?;
+
+        if !is_after {
+            let after = AfterSizes {
+                id: user_id,
+                chest,
+                waist,
+                hips,
+                hand_biceps,
+                leg_biceps,
+                calf,
+            };
+            let _ = diesel::insert_into(crate::db::schema::after_sizes::table)
+                .values(&after)
+                .execute(&mut self.conn)?;
+        } else {
+            let before = self.get_before_size(user_id).await?;
+            if before.is_some() {
+                let _ = diesel::update(crate::db::schema::before_sizes::table)
+                    .filter(crate::db::schema::before_sizes::id.eq(user_id))
+                    .set((
+                        crate::db::schema::before_sizes::chest.eq(chest),
+                        crate::db::schema::before_sizes::waist.eq(waist),
+                        crate::db::schema::before_sizes::hips.eq(hips),
+                        crate::db::schema::before_sizes::hand_biceps.eq(hand_biceps),
+                        crate::db::schema::before_sizes::leg_biceps.eq(leg_biceps),
+                        crate::db::schema::before_sizes::calf.eq(calf),
+                    ))
+                    .execute(&mut self.conn)?;
+            } else {
+                let before = BeforeSizes {
+                    id: user_id,
+                    chest,
+                    waist,
+                    hips,
+                    hand_biceps,
+                    leg_biceps,
+                    calf,
+                };
+                let _ = diesel::insert_into(crate::db::schema::before_sizes::table)
+                    .values(&before)
+                    .execute(&mut self.conn)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn is_user_have_after_size(&mut self, user_id: Uuid) -> Result<bool> {
+        let user: Option<Uuid> = crate::db::schema::after_sizes::table
+            .filter(crate::db::schema::after_sizes::id.eq(user_id))
+            .select(crate::db::schema::after_sizes::id)
+            .first(&mut self.conn)
+            .optional()?;
+        Ok(user.is_some())
+    }
+
+    pub async fn get_after_size(&mut self, user_id: Uuid) -> Result<Option<AfterSizes>> {
+        let user = crate::db::schema::after_sizes::table
+            .filter(crate::db::schema::after_sizes::id.eq(user_id))
+            .first(&mut self.conn)
+            .optional()?;
+        Ok(user)
+    }
+
+    pub async fn get_before_size(&mut self, user_id: Uuid) -> Result<Option<BeforeSizes>> {
+        let user = crate::db::schema::before_sizes::table
+            .filter(crate::db::schema::before_sizes::id.eq(user_id))
+            .first(&mut self.conn)
+            .optional()?;
+        Ok(user)
     }
 }

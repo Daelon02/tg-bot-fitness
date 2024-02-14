@@ -59,7 +59,7 @@ pub async fn get_number(
                         MenuCommands::MyGymTrainings.to_string(),
                         MenuCommands::MyHomeTrainings.to_string(),
                         MenuCommands::MyDiet.to_string(),
-                        MenuCommands::UpdateData.to_string(),
+                        MenuCommands::Data.to_string(),
                     ])
                     .resize_keyboard(true),
                 )
@@ -165,7 +165,7 @@ pub async fn get_height_and_weight(
                             MenuCommands::MyGymTrainings.to_string(),
                             MenuCommands::MyHomeTrainings.to_string(),
                             MenuCommands::MyDiet.to_string(),
-                            MenuCommands::UpdateData.to_string(),
+                            MenuCommands::Data.to_string(),
                         ])
                         .resize_keyboard(true),
                     )
