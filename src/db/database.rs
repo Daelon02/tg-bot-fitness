@@ -111,7 +111,7 @@ impl Db {
     pub async fn insert_training(
         &mut self,
         user_id: Uuid,
-        gym_training: &str,
+        training: &str,
         status: String,
     ) -> Result<()> {
         log::info!("Inserting gym training for user {}", user_id);
@@ -119,7 +119,7 @@ impl Db {
         let new_gym_training = Trainings {
             id,
             user_id,
-            user_trainings: serde_json::to_value(gym_training)?,
+            user_trainings: serde_json::to_value(training)?,
             status,
             created_at: chrono::Utc::now(),
             updated_at: None,

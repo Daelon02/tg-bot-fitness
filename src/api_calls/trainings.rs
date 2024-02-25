@@ -166,9 +166,16 @@ pub async fn delete_training(
             bot.send_message(msg.chat.id, "Тренування видалено!")
                 .reply_markup(keyboard.resize_keyboard(true))
                 .await?;
-            dialogue
-                .update(State::HomeTrainingMenu { phone_number })
-                .await?;
+
+            if training_status == HOME_STATE {
+                dialogue
+                    .update(State::HomeTrainingMenu { phone_number })
+                    .await?;
+            } else {
+                dialogue
+                    .update(State::GymTrainingMenu { phone_number })
+                    .await?;
+            }
         }
         Err(_) => {
             let keyboard = make_keyboard(vec![
@@ -181,9 +188,16 @@ pub async fn delete_training(
             bot.send_message(msg.chat.id, "Тренування вже відсутнє!")
                 .reply_markup(keyboard.resize_keyboard(true))
                 .await?;
-            dialogue
-                .update(State::HomeTrainingMenu { phone_number })
-                .await?;
+
+            if training_status == HOME_STATE {
+                dialogue
+                    .update(State::HomeTrainingMenu { phone_number })
+                    .await?;
+            } else {
+                dialogue
+                    .update(State::GymTrainingMenu { phone_number })
+                    .await?;
+            }
         }
     }
     Ok(())
