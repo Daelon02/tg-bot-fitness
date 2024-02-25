@@ -18,9 +18,9 @@ pub struct Users {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug)]
-#[diesel(table_name = crate::db::schema::diet_lists_for_user)]
+#[diesel(table_name = crate::db::schema::diet_lists)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct DietListForUser {
+pub struct DietLists {
     pub id: Uuid,
     pub user_id: Uuid,
     pub diet_list: Value,
@@ -29,35 +29,23 @@ pub struct DietListForUser {
 }
 
 #[derive(Queryable, Selectable, Insertable)]
-#[diesel(table_name = crate::db::schema::trainings_for_user)]
+#[diesel(table_name = crate::db::schema::trainings)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct TrainingsForUser {
+pub struct Trainings {
     pub id: Uuid,
     pub user_id: Uuid,
-    pub trainings: Value,
+    pub user_trainings: Value,
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Queryable, Selectable, Insertable, Clone, Default)]
-#[diesel(table_name = crate::db::schema::before_sizes)]
+#[diesel(table_name = crate::db::schema::sizes)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct BeforeSizes {
+pub struct Sizes {
     pub id: Uuid,
-    pub chest: i32,
-    pub waist: i32,
-    pub hips: i32,
-    pub hand_biceps: i32,
-    pub leg_biceps: i32,
-    pub calf: i32,
-}
-
-#[derive(Queryable, Selectable, Insertable, Clone, Default)]
-#[diesel(table_name = crate::db::schema::after_sizes)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct AfterSizes {
-    pub id: Uuid,
+    pub user_id: Uuid,
     pub chest: i32,
     pub waist: i32,
     pub hips: i32,

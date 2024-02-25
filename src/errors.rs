@@ -1,3 +1,6 @@
+use plotters::drawing::DrawingAreaErrorKind;
+use plotters_bitmap::BitMapBackendError;
+
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, thiserror::Error)]
 pub enum Errors {
@@ -33,6 +36,12 @@ pub enum Errors {
 
     #[error(transparent)]
     ParseIntError(#[from] std::num::ParseIntError),
+
+    #[error(transparent)]
+    BitMapBackendError(#[from] DrawingAreaErrorKind<BitMapBackendError>),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Errors>;

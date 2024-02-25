@@ -105,7 +105,7 @@ pub async fn show_trainings(
                 TrainingsCommands::GoBack.to_string(),
             ]);
 
-            let trainings: String = serde_json::from_value(trainings.trainings)?;
+            let trainings: String = serde_json::from_value(trainings.user_trainings)?;
 
             bot.send_message(
                 msg.chat.id,

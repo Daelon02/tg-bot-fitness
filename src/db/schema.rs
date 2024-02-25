@@ -12,7 +12,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    diet_lists_for_user (id) {
+    diet_lists (id) {
     id -> Uuid,
     user_id -> Uuid,
     diet_list -> Jsonb,
@@ -22,10 +22,10 @@ diesel::table! {
 }
 
 diesel::table! {
-    trainings_for_user (id) {
+    trainings (id) {
     id -> Uuid,
     user_id -> Uuid,
-    trainings -> Jsonb,
+    user_trainings -> Jsonb,
     status -> Text,
     created_at -> Timestamptz,
     updated_at -> Nullable<Timestamptz>
@@ -33,20 +33,9 @@ diesel::table! {
 }
 
 diesel::table! {
-    before_sizes (id) {
+    sizes (id) {
     id -> Uuid,
-    chest -> Integer,
-    waist -> Integer,
-    hips -> Integer,
-    hand_biceps -> Integer,
-    leg_biceps -> Integer,
-    calf -> Integer,
-    }
-}
-
-diesel::table! {
-    after_sizes (id) {
-    id -> Uuid,
+    user_id -> Uuid,
     chest -> Integer,
     waist -> Integer,
     hips -> Integer,

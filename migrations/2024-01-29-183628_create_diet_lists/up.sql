@@ -1,4 +1,4 @@
-CREATE TABLE diet_lists_for_user
+CREATE TABLE diet_lists
 (
     id         UUID PRIMARY KEY,
     user_id    UUID      NOT NULL,

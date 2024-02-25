@@ -6,10 +6,18 @@ use crate::models::{
     DataCommands, DietCommands, MenuCommands, MyDialogue, State, TrainingsCommands,
 };
 use crate::utils::make_keyboard;
+use plotters::backend::BitMapBackend;
+use plotters::chart::ChartBuilder;
+use plotters::element::{Circle, Text};
+use plotters::prelude::{IntoDrawingArea, LogScalable, RED, WHITE};
+use plotters::series::LineSeries;
+use plotters::style::{IntoFont, ShapeStyle, BLACK, BLUE, CYAN, GREEN, MAGENTA, YELLOW};
 use std::collections::HashMap;
 use std::ops::DerefMut;
+use std::path::Path;
 use std::sync::Arc;
 use teloxide::prelude::*;
+use teloxide::types::InputFile;
 use teloxide::Bot;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -105,9 +113,8 @@ async fn show_data(
 ) -> crate::errors::Result<()> {
     log::info!("User wants to show data {}", msg.chat.id);
     let user = db.get_user(&phone_number).await?;
-    let after = db.is_user_have_after_size(user.id).await?;
-    if after {
-        let size = db.get_after_size(user.id).await?;
+    let size = db.get_size_by_user(user.id).await?;
+    if let Some(size) = size {
         bot.send_message(
             msg.chat.id,
             format!(
@@ -124,12 +131,12 @@ async fn show_data(
                 user.age.unwrap_or_default(),
                 user.height.unwrap_or_default(),
                 user.weight.unwrap_or_default(),
-                size.clone().unwrap_or_default().chest,
-                size.clone().unwrap_or_default().waist,
-                size.clone().unwrap_or_default().hips,
-                size.clone().unwrap_or_default().hand_biceps,
-                size.clone().unwrap_or_default().leg_biceps,
-                size.unwrap_or_default().calf
+                size.chest,
+                size.waist,
+                size.hips,
+                size.hand_biceps,
+                size.leg_biceps,
+                size.calf
             ),
         )
         .await?;
@@ -144,56 +151,17 @@ async fn show_data(
             .reply_markup(keyboard.resize_keyboard(true))
             .await?;
     } else {
-        let size = db.get_before_size(user.id).await?;
-        if let Some(size) = size {
-            bot.send_message(
-                msg.chat.id,
-                format!(
-                    "Ваші дані: \n\n\
-                     Вік: {} \n\
-                     Зріст: {} \n\
-                     Вага: {} \n\
-                     Розмір грудей: {} \n\
-                     Розмір талії: {} \n\
-                     Розмір бедер: {} \n\
-                     Розмір біцепсу руки: {} \n\
-                     Розмір біцепсу ноги: {} \n\
-                     Розмір ікри: {}",
-                    user.age.unwrap_or_default(),
-                    user.height.unwrap_or_default(),
-                    user.weight.unwrap_or_default(),
-                    size.chest,
-                    size.waist,
-                    size.hips,
-                    size.hand_biceps,
-                    size.leg_biceps,
-                    size.calf
-                ),
-            )
+        bot.send_message(msg.chat.id, "Ви ще не вводили дані!")
             .await?;
-            let keyboard = make_keyboard(vec![
-                DataCommands::UpdateData.to_string(),
-                DataCommands::UpdateSize.to_string(),
-                DataCommands::ShowData.to_string(),
-                DataCommands::ShowStatistics.to_string(),
-                DataCommands::GoBack.to_string(),
-            ]);
-            bot.send_message(msg.chat.id, MenuCommands::Data.to_string())
-                .reply_markup(keyboard.resize_keyboard(true))
-                .await?;
-        } else {
-            bot.send_message(msg.chat.id, "Ви ще не вводили дані!")
-                .await?;
-            let keyboard = make_keyboard(vec![
-                MenuCommands::MyGymTrainings.to_string(),
-                MenuCommands::MyHomeTrainings.to_string(),
-                MenuCommands::MyDiet.to_string(),
-                MenuCommands::Data.to_string(),
-            ]);
-            bot.send_message(msg.chat.id, MenuCommands::GoBack.to_string())
-                .reply_markup(keyboard.resize_keyboard(true))
-                .await?;
-        }
+        let keyboard = make_keyboard(vec![
+            MenuCommands::MyGymTrainings.to_string(),
+            MenuCommands::MyHomeTrainings.to_string(),
+            MenuCommands::MyDiet.to_string(),
+            MenuCommands::Data.to_string(),
+        ]);
+        bot.send_message(msg.chat.id, MenuCommands::GoBack.to_string())
+            .reply_markup(keyboard.resize_keyboard(true))
+            .await?;
     }
     Ok(())
 }
@@ -206,57 +174,116 @@ async fn show_statistic(
 ) -> crate::errors::Result<()> {
     log::info!("User wants to show statistic {}", msg.chat.id);
     let user = db.get_user(&phone_number).await?;
-    let after = db.get_after_size(user.id).await?;
-    let before = db.get_before_size(user.id).await?;
+    let sizes_list = db.get_sizes_by_user(user.id).await?;
 
-    if let Some(before) = before {
-        if let Some(after) = after {
-            let chest = after.chest - before.chest;
-            let waist = after.waist - before.waist;
-            let hips = after.hips - before.hips;
-            let hand_biceps = after.hand_biceps - before.hand_biceps;
-            let leg_biceps = after.leg_biceps - before.leg_biceps;
-            let calf = after.calf - before.calf;
-
-            bot.send_message(
-                msg.chat.id,
-                format!(
-                    "Це скільки ви набрали/скинули після останнього оновлення данних\n\n\
-                Ваші дані: \n\n\
-                     Різниця до/після грудей: {} \n\
-                     Різниця до/після талії: {} \n\
-                     Різниця до/після бедер: {} \n\
-                     Різниця до/після біцепсу руки: {} \n\
-                     Різниця до/після біцепсу ноги: {} \n\
-                     Різниця до/після ікри: {}",
-                    chest, waist, hips, hand_biceps, leg_biceps, calf
-                ),
-            )
-            .await?;
-            let keyboard = make_keyboard(vec![
-                DataCommands::UpdateData.to_string(),
-                DataCommands::UpdateSize.to_string(),
-                DataCommands::ShowData.to_string(),
-                DataCommands::ShowStatistics.to_string(),
-                DataCommands::GoBack.to_string(),
-            ]);
-            bot.send_message(msg.chat.id, "")
-                .reply_markup(keyboard.resize_keyboard(true))
-                .await?;
-        } else {
-            bot.send_message(msg.chat.id, "Ви ще не вводили нові дані!")
-                .await?;
-            let keyboard = make_keyboard(vec![
-                DataCommands::UpdateData.to_string(),
-                DataCommands::UpdateSize.to_string(),
-                DataCommands::ShowData.to_string(),
-                DataCommands::ShowStatistics.to_string(),
-                DataCommands::GoBack.to_string(),
-            ]);
-            bot.send_message(msg.chat.id, "")
-                .reply_markup(keyboard.resize_keyboard(true))
-                .await?;
+    if let Some(sizes_list) = sizes_list {
+        let path = Path::new("plots");
+        if !path.exists() {
+            std::fs::create_dir(path)?;
         }
+
+        let path = &format!("plots/stats_plot_{}.png", user.id);
+        {
+            let root = BitMapBackend::new(path, (1280, 720)).into_drawing_area();
+            root.fill(&WHITE)?;
+
+            let mut chart = ChartBuilder::on(&root)
+                .caption("Статистика розмірів", ("sans-serif", 40).into_font())
+                .x_label_area_size(40.0)
+                .y_label_area_size(40.0)
+                .build_cartesian_2d(0.0..7.0, 0.0..150.0)?;
+
+            chart.configure_mesh().draw()?;
+
+            for (i, sizes) in sizes_list.iter().enumerate() {
+                for (j, field_value) in [
+                    &sizes.chest,
+                    &sizes.waist,
+                    &sizes.hips,
+                    &sizes.hand_biceps,
+                    &sizes.leg_biceps,
+                    &sizes.calf,
+                ]
+                .iter()
+                .enumerate()
+                {
+                    let color = match j {
+                        0 => BLUE,    // груди
+                        1 => GREEN,   // талія
+                        2 => RED,     // стегна
+                        3 => YELLOW,  // біцепс руки
+                        4 => MAGENTA, // біцепс ноги
+                        5 => CYAN,    // ікали
+                        _ => BLACK,   // default
+                    };
+
+                    let value = field_value.as_f64();
+                    chart.draw_series(std::iter::once(Circle::new(
+                        (i as f64, value),
+                        3,
+                        ShapeStyle::from(color).filled(),
+                    )))?;
+
+                    // Додавання тексту з числами
+                    chart.draw_series(std::iter::once(Text::new(
+                        format!("{}", field_value),
+                        ((i as f64) + 0.05, value + 2.0),
+                        ("sans-serif", 15.0).into_font(),
+                    )))?;
+
+                    // Додавання рисок до наступної точки, крім останньої
+                    if i < sizes_list.len() - 1 {
+                        let next_sizes = &sizes_list[i + 1];
+                        let next_value = match j {
+                            0 => next_sizes.chest,
+                            1 => next_sizes.waist,
+                            2 => next_sizes.hips,
+                            3 => next_sizes.hand_biceps,
+                            4 => next_sizes.leg_biceps,
+                            5 => next_sizes.calf,
+                            _ => 0, // default
+                        };
+                        let next_value = next_value.as_f64();
+                        chart.draw_series(LineSeries::new(
+                            vec![(i as f64, value), ((i + 1) as f64, next_value)],
+                            &BLACK,
+                        ))?;
+                    } else {
+                        // Додаємо пояснення поруч із останньою крапкою
+                        let explanation = match j {
+                            0 => "Груди",
+                            1 => "Талія",
+                            2 => "Стегна",
+                            3 => "Біцепс руки",
+                            4 => "Біцепс ноги",
+                            5 => "Ікри",
+                            _ => "",
+                        };
+                        chart.draw_series(std::iter::once(Text::new(
+                            explanation,
+                            (i as f64 + 0.18, value + 2.0), // Збільшуємо другий аргумент, щоб текст був ближче до крапки
+                            ("sans-serif", 15.0).into_font().color(&BLACK),
+                        )))?;
+                    }
+                }
+            }
+        }
+
+        let file = InputFile::file(format!("plots/stats_plot_{}.png", user.id));
+
+        let keyboard = make_keyboard(vec![
+            DataCommands::UpdateData.to_string(),
+            DataCommands::UpdateSize.to_string(),
+            DataCommands::ShowData.to_string(),
+            DataCommands::ShowStatistics.to_string(),
+            DataCommands::GoBack.to_string(),
+        ]);
+
+        bot.send_photo(msg.chat.id, file)
+            .reply_markup(keyboard.resize_keyboard(true))
+            .await?;
+
+        std::fs::remove_file(format!("plots/stats_plot_{}.png", user.id))?;
     } else {
         bot.send_message(msg.chat.id, "Ви ще не вводили дані!")
             .await?;
@@ -271,7 +298,6 @@ async fn show_statistic(
             .reply_markup(keyboard.resize_keyboard(true))
             .await?;
     }
-
     Ok(())
 }
 
@@ -621,8 +647,7 @@ pub async fn update_size(
                 phone_number.clone(),
             )
             .await?;
-            let is_after = db.is_user_have_after_size(user.id).await?;
-            db.update_size(user.id, data, is_after).await?;
+            db.update_size(user.id, data).await?;
 
             let keyboard = make_keyboard(vec![
                 DataCommands::UpdateData.to_string(),

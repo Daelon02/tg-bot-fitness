@@ -1,4 +1,4 @@
-CREATE TABLE trainings_for_user (
+CREATE TABLE trainings (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     trainings jsonb NOT NULL,

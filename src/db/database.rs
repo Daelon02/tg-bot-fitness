@@ -1,4 +1,4 @@
-use crate::db::models::{AfterSizes, BeforeSizes, DietListForUser, TrainingsForUser, Users};
+use crate::db::models::{DietLists, Sizes, Trainings, Users};
 use crate::errors::Result;
 use diesel::prelude::*;
 use diesel::{Connection, PgConnection};
@@ -116,28 +116,24 @@ impl Db {
     ) -> Result<()> {
         log::info!("Inserting gym training for user {}", user_id);
         let id = Uuid::new_v4();
-        let new_gym_training = TrainingsForUser {
+        let new_gym_training = Trainings {
             id,
             user_id,
-            trainings: serde_json::to_value(gym_training)?,
+            user_trainings: serde_json::to_value(gym_training)?,
             status,
             created_at: chrono::Utc::now(),
             updated_at: None,
         };
-        diesel::insert_into(crate::db::schema::trainings_for_user::table)
+        diesel::insert_into(crate::db::schema::trainings::table)
             .values(&new_gym_training)
             .execute(&mut self.conn)?;
         Ok(())
     }
 
-    pub async fn get_training(
-        &mut self,
-        user_id: Uuid,
-        status: String,
-    ) -> Result<TrainingsForUser> {
-        let home_training = crate::db::schema::trainings_for_user::table
-            .filter(crate::db::schema::trainings_for_user::user_id.eq(user_id))
-            .filter(crate::db::schema::trainings_for_user::status.eq(status))
+    pub async fn get_training(&mut self, user_id: Uuid, status: String) -> Result<Trainings> {
+        let home_training = crate::db::schema::trainings::table
+            .filter(crate::db::schema::trainings::user_id.eq(user_id))
+            .filter(crate::db::schema::trainings::status.eq(status))
             .first(&mut self.conn)?;
         Ok(home_training)
     }
@@ -149,56 +145,56 @@ impl Db {
         training: Value,
         status: String,
     ) -> Result<()> {
-        let _ = diesel::update(crate::db::schema::trainings_for_user::table)
-            .filter(crate::db::schema::trainings_for_user::user_id.eq(user_id))
-            .filter(crate::db::schema::trainings_for_user::status.eq(status))
-            .set(crate::db::schema::trainings_for_user::trainings.eq(training))
+        let _ = diesel::update(crate::db::schema::trainings::table)
+            .filter(crate::db::schema::trainings::user_id.eq(user_id))
+            .filter(crate::db::schema::trainings::status.eq(status))
+            .set(crate::db::schema::trainings::user_trainings.eq(training))
             .execute(&mut self.conn)?;
         Ok(())
     }
 
     pub async fn delete_training(&mut self, user_id: Uuid, status: String) -> Result<()> {
-        diesel::delete(crate::db::schema::trainings_for_user::table)
-            .filter(crate::db::schema::trainings_for_user::user_id.eq(user_id))
-            .filter(crate::db::schema::trainings_for_user::status.eq(status))
+        diesel::delete(crate::db::schema::trainings::table)
+            .filter(crate::db::schema::trainings::user_id.eq(user_id))
+            .filter(crate::db::schema::trainings::status.eq(status))
             .execute(&mut self.conn)?;
         Ok(())
     }
 
     pub async fn insert_diet_list(&mut self, user_id: Uuid, diet_list: &str) -> Result<()> {
         let id = Uuid::new_v4();
-        let new_diet_list = DietListForUser {
+        let new_diet_list = DietLists {
             id,
             user_id,
             diet_list: serde_json::to_value(diet_list)?,
             created_at: chrono::Utc::now(),
             updated_at: None,
         };
-        diesel::insert_into(crate::db::schema::diet_lists_for_user::table)
+        diesel::insert_into(crate::db::schema::diet_lists::table)
             .values(&new_diet_list)
             .execute(&mut self.conn)?;
         Ok(())
     }
 
-    pub async fn get_diet_list(&mut self, user_id: Uuid) -> Result<DietListForUser> {
-        let diet_list = crate::db::schema::diet_lists_for_user::table
-            .filter(crate::db::schema::diet_lists_for_user::user_id.eq(user_id))
+    pub async fn get_diet_list(&mut self, user_id: Uuid) -> Result<DietLists> {
+        let diet_list = crate::db::schema::diet_lists::table
+            .filter(crate::db::schema::diet_lists::user_id.eq(user_id))
             .first(&mut self.conn)?;
         Ok(diet_list)
     }
 
     #[allow(dead_code)]
     pub async fn update_diet_list(&mut self, user_id: Uuid, diet_list: Value) -> Result<()> {
-        let _ = diesel::update(crate::db::schema::diet_lists_for_user::table)
-            .filter(crate::db::schema::diet_lists_for_user::user_id.eq(user_id))
-            .set(crate::db::schema::diet_lists_for_user::diet_list.eq(diet_list))
+        let _ = diesel::update(crate::db::schema::diet_lists::table)
+            .filter(crate::db::schema::diet_lists::user_id.eq(user_id))
+            .set(crate::db::schema::diet_lists::diet_list.eq(diet_list))
             .execute(&mut self.conn)?;
         Ok(())
     }
 
     pub async fn delete_diet_list(&mut self, user_id: Uuid) -> Result<()> {
-        diesel::delete(crate::db::schema::diet_lists_for_user::table)
-            .filter(crate::db::schema::diet_lists_for_user::user_id.eq(user_id))
+        diesel::delete(crate::db::schema::diet_lists::table)
+            .filter(crate::db::schema::diet_lists::user_id.eq(user_id))
             .execute(&mut self.conn)?;
         Ok(())
     }
@@ -227,12 +223,7 @@ impl Db {
         Ok(())
     }
 
-    pub async fn update_size(
-        &mut self,
-        user_id: Uuid,
-        size: Vec<String>,
-        is_after: bool,
-    ) -> Result<()> {
+    pub async fn update_size(&mut self, user_id: Uuid, size: Vec<String>) -> Result<()> {
         let chest = size[0].parse()?;
         let waist = size[1].parse()?;
         let hips = size[2].parse()?;
@@ -240,72 +231,34 @@ impl Db {
         let leg_biceps = size[4].parse()?;
         let calf = size[5].parse()?;
 
-        if !is_after {
-            let after = AfterSizes {
-                id: user_id,
-                chest,
-                waist,
-                hips,
-                hand_biceps,
-                leg_biceps,
-                calf,
-            };
-            let _ = diesel::insert_into(crate::db::schema::after_sizes::table)
-                .values(&after)
-                .execute(&mut self.conn)?;
-        } else {
-            let before = self.get_before_size(user_id).await?;
-            if before.is_some() {
-                let _ = diesel::update(crate::db::schema::before_sizes::table)
-                    .filter(crate::db::schema::before_sizes::id.eq(user_id))
-                    .set((
-                        crate::db::schema::before_sizes::chest.eq(chest),
-                        crate::db::schema::before_sizes::waist.eq(waist),
-                        crate::db::schema::before_sizes::hips.eq(hips),
-                        crate::db::schema::before_sizes::hand_biceps.eq(hand_biceps),
-                        crate::db::schema::before_sizes::leg_biceps.eq(leg_biceps),
-                        crate::db::schema::before_sizes::calf.eq(calf),
-                    ))
-                    .execute(&mut self.conn)?;
-            } else {
-                let before = BeforeSizes {
-                    id: user_id,
-                    chest,
-                    waist,
-                    hips,
-                    hand_biceps,
-                    leg_biceps,
-                    calf,
-                };
-                let _ = diesel::insert_into(crate::db::schema::before_sizes::table)
-                    .values(&before)
-                    .execute(&mut self.conn)?;
-            }
-        }
+        let sizes = Sizes {
+            id: Uuid::new_v4(),
+            user_id,
+            chest,
+            waist,
+            hips,
+            hand_biceps,
+            leg_biceps,
+            calf,
+        };
+        let _ = diesel::insert_into(crate::db::schema::sizes::table)
+            .values(&sizes)
+            .execute(&mut self.conn)?;
         Ok(())
     }
 
-    pub async fn is_user_have_after_size(&mut self, user_id: Uuid) -> Result<bool> {
-        let user: Option<Uuid> = crate::db::schema::after_sizes::table
-            .filter(crate::db::schema::after_sizes::id.eq(user_id))
-            .select(crate::db::schema::after_sizes::id)
-            .first(&mut self.conn)
-            .optional()?;
-        Ok(user.is_some())
-    }
-
-    pub async fn get_after_size(&mut self, user_id: Uuid) -> Result<Option<AfterSizes>> {
-        let user = crate::db::schema::after_sizes::table
-            .filter(crate::db::schema::after_sizes::id.eq(user_id))
+    pub async fn get_size_by_user(&mut self, user_id: Uuid) -> Result<Option<Sizes>> {
+        let user = crate::db::schema::sizes::table
+            .filter(crate::db::schema::sizes::user_id.eq(user_id))
             .first(&mut self.conn)
             .optional()?;
         Ok(user)
     }
 
-    pub async fn get_before_size(&mut self, user_id: Uuid) -> Result<Option<BeforeSizes>> {
-        let user = crate::db::schema::before_sizes::table
-            .filter(crate::db::schema::before_sizes::id.eq(user_id))
-            .first(&mut self.conn)
+    pub async fn get_sizes_by_user(&mut self, user_id: Uuid) -> Result<Option<Vec<Sizes>>> {
+        let user = crate::db::schema::sizes::table
+            .filter(crate::db::schema::sizes::user_id.eq(user_id))
+            .load(&mut self.conn)
             .optional()?;
         Ok(user)
     }
